@@ -1,0 +1,11 @@
+# Python compiled files
+*.pyc
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+
+# Some people use gedit and fuck your clean directories
+*~
