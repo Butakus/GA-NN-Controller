@@ -61,16 +61,19 @@ class GATrainer():
 
 
     def selection(self):
-        # TODO: Return the best elements from the current population
+        # TODO: Return the best elements from the current population (Tournament)
         pass
 
     def offspring_generation(self, winners):
-        # TODO: Generate the offspring by a crossover process from the winners subset
+        # TODO: Apply a crossover process to the winners subset and generate the offspring for the new generation
         pass
 
     def mutation(self):
-        # TODO: Randomly mutate some elements in the population
-        pass
+        """ Randomly mutate some elements in the current population """
+        for i in xrange(len(self.population)):
+            if np.random.random() < mutation_rate:
+                # Multiply the current value by a random value from a normal distribution with mean=0 and std=2
+                self.population[i] = self.population[i] * np.random.normal(0,2,1)[0]
 
     def next_generation(self):
         """ Evaluate the fitness of the current generation and compute the next """
