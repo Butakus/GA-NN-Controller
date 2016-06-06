@@ -85,28 +85,42 @@ class GATrainer():
         return self.population[[int(x) for x in winners]]
 
     def offspring_generation(self, winners):
-        # TODO: Apply a crossover process to the winners subset and generate the offspring for the new generation
-        pass
+        """ Apply a crossover process to the winners subset and generate the offspring for the new generation """
+        offspring_length = self.population_size - len(winners)
+        offspring = np.zeros((offspring_length, winners.shape[1]))
+        # Populate the offspring array. Just copy and repeat the winners
+        for i in xrange(offspring_length):
+            # Copy a row fron winners subset
+            offspring[i] = winners[i % len(winners)]
+            # Mating process. Shuffle the offspring columns.
+            # The generated weights are a combination of the winners weights
+            np.random.shuffle(offspring[i])
+        new_population = np.zeros((self.population_size, winners.shape[1]))
+        new_population[:len(winners)] = winners
+        new_population[len(winners):] = offspring
+        return new_population        
 
     def mutation(self):
         """ Randomly mutate some elements in the current population """
-        for i in xrange(len(self.population)):
-            if np.random.random() < mutation_rate:
-                # Multiply the current value by a random value from a normal distribution with mean=0 and std=2
-                self.population[i] = self.population[i] * np.random.normal(0,2,1)[0]
+        for i in xrange(self.population_size):
+            for j in xrange(len(self.population[i])):
+                if np.random.random() < self.mutation_rate:
+                    # Multiply the current value by a random value from a normal distribution with mean=0 and std=2
+                    self.population[i][j] = self.population[i][j] * np.random.normal(0,2,1)[0]
 
     def next_generation(self):
         """ Evaluate the fitness of the current generation and compute the next """
         # Compute fitness
         for i in xrange(self.population_size):
-            w = chromosome_to_weights(self.population[i])
+            w = self.chromosome_to_weights(self.population[i])
             self.population_fitness[i,0] = self.cost_function(w)
         # Select the best elements
-        winners = selection()
+        winners = self.selection()
         # Generate the population offspring
-        self.population = offspring_generation(winners)
+        self.population = self.offspring_generation(winners)
         # Mutate some elements
-        mutation()
+        self.mutation()
+
 
 def cost(x):
     """ Just to test some functions """
@@ -119,6 +133,7 @@ if __name__ == '__main__':
     print "population: {}".format(tr.population)
     print "fitness: {}".format(tr.population_fitness)
 
+    """
     for i in xrange(10):
         w = tr.chromosome_to_weights(tr.population[i])
         tr.population_fitness[i,0] = cost(w)
@@ -126,3 +141,12 @@ if __name__ == '__main__':
     print "fitness: {}".format(tr.population_fitness)
     winners = tr.selection()
     print "winners: {}".format(winners)
+
+    tr.population = tr.offspring_generation(winners)
+    print "new pop: {}".format(tr.population)
+
+    tr.mutation()
+    print "mutated pop: {}".format(tr.population)
+    """
+    tr.next_generation()
+    print "population: {}".format(tr.population)
