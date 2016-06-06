@@ -55,14 +55,34 @@ class GATrainer():
         """ Randomly initialize the population """
         # Length of each chromosome: Elements in L0 weights + elements in L1 weights
         chromosome_length = self.input_length * self.hidden_layer_length + self.hidden_layer_length
-        # Initial values random between [-1,1]
-        self.population = 2*np.random.random((self.population_size, chromosome_length)) - 1
-        self.population_fitness = np.zeros(self.population_size)
+        # Initial values random between [-2,2]
+        self.population = 4*np.random.random((self.population_size, chromosome_length)) - 2
+        self.population_fitness = np.zeros((self.population_size, 2)) # First col = value, second col = index
+        self.population_fitness[:,1] = range(self.population_size)
 
+
+    def tournament(self, tournament_size):
+        """ Tournament process. Get a random subset of the population and return the best element """
+        # Pick the selected elements indexes
+        selected = np.random.choice(range(self.population_size), tournament_size, replace=False)
+        winner = np.argmin(self.population_fitness[selected, 0]) # Winner index (in selected array)
+        winner = self.population_fitness[selected[winner], 1] # Actual index (in global population array)
+        return winner
 
     def selection(self):
-        # TODO: Return the best elements from the current population (Tournament)
-        pass
+        """ Return the best elements from the current population (by tournament) """
+        # 20% of the new population will be elements from the current population
+        number_of_winners = int(round(0.2 * self.population_size))
+        winners = np.zeros(number_of_winners)
+        # Each round in the tournament will pick a 10% of the population
+        tournament_size =  int(round(0.1 * self.population_size))
+        for i in xrange(number_of_winners):
+            winner = self.tournament(tournament_size)
+            while winner in winners:
+                # Repeat until it founds an element not chosen already
+                winner = self.tournament(tournament_size)
+            winners[i] = winner
+        return self.population[[int(x) for x in winners]]
 
     def offspring_generation(self, winners):
         # TODO: Apply a crossover process to the winners subset and generate the offspring for the new generation
@@ -80,10 +100,29 @@ class GATrainer():
         # Compute fitness
         for i in xrange(self.population_size):
             w = chromosome_to_weights(self.population[i])
-            self.population_fitness[i] = self.cost_function(w)
+            self.population_fitness[i,0] = self.cost_function(w)
         # Select the best elements
         winners = selection()
         # Generate the population offspring
         self.population = offspring_generation(winners)
         # Mutate some elements
         mutation()
+
+def cost(x):
+    """ Just to test some functions """
+    return np.random.random()
+
+if __name__ == '__main__':
+    """ Playground (Test area) """
+    tr = GATrainer(10,0.05,3,5,cost)
+    tr.init_population()
+    print "population: {}".format(tr.population)
+    print "fitness: {}".format(tr.population_fitness)
+
+    for i in xrange(10):
+        w = tr.chromosome_to_weights(tr.population[i])
+        tr.population_fitness[i,0] = cost(w)
+
+    print "fitness: {}".format(tr.population_fitness)
+    winners = tr.selection()
+    print "winners: {}".format(winners)
