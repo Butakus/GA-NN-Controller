@@ -49,7 +49,7 @@ class GATrainer():
         best_pop_index = np.argmin(self.population_fitness)
         best_pop = self.population[best_pop_index]
         # Reshape the element to get the weights
-        return chromosome_to_weights(best_pop)
+        return (self.population_fitness[best_pop_index][0], self.chromosome_to_weights(best_pop))
 
     def init_population(self):
         """ Randomly initialize the population """
@@ -74,9 +74,11 @@ class GATrainer():
         # 20% of the new population will be elements from the current population
         number_of_winners = int(round(0.2 * self.population_size))
         winners = np.zeros(number_of_winners)
+        # But the best element will automatically pass (VIP access)
+        winners[0] = np.argmin(self.population_fitness[:,0])
         # Each round in the tournament will pick a 10% of the population
-        tournament_size =  int(round(0.1 * self.population_size))
-        for i in xrange(number_of_winners):
+        tournament_size = int(round(0.1 * self.population_size))
+        for i in xrange(1, number_of_winners):
             winner = self.tournament(tournament_size)
             while winner in winners:
                 # Repeat until it founds an element not chosen already
@@ -119,7 +121,7 @@ class GATrainer():
         # Generate the population offspring
         self.population = self.offspring_generation(winners)
         # Mutate some elements
-        self.mutation()
+        #self.mutation()
 
 
 def cost(x):
