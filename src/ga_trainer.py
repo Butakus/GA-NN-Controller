@@ -1,3 +1,5 @@
+#!/usr/bin/python2
+
 # Copyright (C) 2016  Francisco Miguel Moreno
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,6 +19,8 @@
 
 import numpy as np
 
+RANDOM_SEED = 1
+
 
 class GATrainer():
     """ GATrainer """
@@ -25,7 +29,7 @@ class GATrainer():
         self.population_size = pop_size
         self.mutation_rate = mutation_rate
         # Seed for the random number generator
-        np.random.seed(1)
+        np.random.seed(RANDOM_SEED)
         # Variables to know how the weights matrix is shaped
         self.input_length = input_length
         self.hidden_layer_length = hidden_layer_length
@@ -42,14 +46,22 @@ class GATrainer():
         w1 = chromosome[w0_length:]
         return np.array([w0, w1])
         
+    def compute_fitness(self):
+        """ Compute and update the fitness of each element """
+        for i in xrange(self.population_size):
+            w = self.chromosome_to_weights(self.population[i])
+            self.population_fitness[i,0] = self.cost_function(w)
+
 
     def get_best_elemment(self):
         """ Return the best set of weights in the population """
         # Get the best element in the population
-        best_pop_index = np.argmin(self.population_fitness)
+        best_pop_index = np.argmin(self.population_fitness[:,0])
+        print "best_pop_index: {}".format(best_pop_index)
         best_pop = self.population[best_pop_index]
+        print "best_pop: {}".format(best_pop)
         # Reshape the element to get the weights
-        return (self.population_fitness[best_pop_index][0], self.chromosome_to_weights(best_pop))
+        return (self.population_fitness[best_pop_index,0], self.chromosome_to_weights(best_pop))
 
     def init_population(self):
         """ Randomly initialize the population """
@@ -59,7 +71,7 @@ class GATrainer():
         self.population = 4*np.random.random((self.population_size, chromosome_length)) - 2
         self.population_fitness = np.zeros((self.population_size, 2)) # First col = value, second col = index
         self.population_fitness[:,1] = range(self.population_size)
-
+        self.compute_fitness()
 
     def tournament(self, tournament_size):
         """ Tournament process. Get a random subset of the population and return the best element """
@@ -86,6 +98,18 @@ class GATrainer():
             winners[i] = winner
         return self.population[[int(x) for x in winners]]
 
+    def global_mutation(self):
+        """ Randomly mutate some elements in the current population """
+        for i in xrange(self.population_size):
+            for j in xrange(len(self.population[i])):
+                if np.random.random() < self.mutation_rate:
+                    # Multiply the current value by a random value from a normal distribution with mean=0 and std=2
+                    self.population[i][j] = self.population[i][j] * np.random.normal(0,2,1)[0]
+
+    def element_mutation(self, element):
+        # TODO: Randomly mutate the given element
+        pass
+
     def offspring_generation(self, winners):
         """ Apply a crossover process to the winners subset and generate the offspring for the new generation """
         offspring_length = self.population_size - len(winners)
@@ -102,35 +126,24 @@ class GATrainer():
         new_population[len(winners):] = offspring
         return new_population        
 
-    def mutation(self):
-        """ Randomly mutate some elements in the current population """
-        for i in xrange(self.population_size):
-            for j in xrange(len(self.population[i])):
-                if np.random.random() < self.mutation_rate:
-                    # Multiply the current value by a random value from a normal distribution with mean=0 and std=2
-                    self.population[i][j] = self.population[i][j] * np.random.normal(0,2,1)[0]
-
     def next_generation(self):
-        """ Evaluate the fitness of the current generation and compute the next """
-        # Compute fitness
-        for i in xrange(self.population_size):
-            w = self.chromosome_to_weights(self.population[i])
-            self.population_fitness[i,0] = self.cost_function(w)
+        """ Compute the next generation and evaluate its fitness """
         # Select the best elements
         winners = self.selection()
         # Generate the population offspring
         self.population = self.offspring_generation(winners)
         # Mutate some elements
         #self.mutation()
-
+        # Compute fitness
+        self.compute_fitness()
 
 def cost(x):
     """ Just to test some functions """
-    return np.random.random()
+    return abs(np.mean(x[0]) + np.mean(x[1]))
 
 if __name__ == '__main__':
     """ Playground (Test area) """
-    tr = GATrainer(10,0.05,3,5,cost)
+    tr = GATrainer(10,0.05,2,3,cost)
     tr.init_population()
     print "population: {}".format(tr.population)
     print "fitness: {}".format(tr.population_fitness)
@@ -152,3 +165,8 @@ if __name__ == '__main__':
     """
     tr.next_generation()
     print "population: {}".format(tr.population)
+    print "population_fitness: {}".format(tr.population_fitness)
+    print "best: {}".format(tr.get_best_elemment())
+    tr.next_generation()
+    print "population: {}".format(tr.population)
+    print "best: {}".format(tr.get_best_elemment())
