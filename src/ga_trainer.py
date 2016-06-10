@@ -57,9 +57,7 @@ class GATrainer():
         """ Return the best set of weights in the population """
         # Get the best element in the population
         best_pop_index = np.argmin(self.population_fitness[:,0])
-        print "best_pop_index: {}".format(best_pop_index)
         best_pop = self.population[best_pop_index]
-        print "best_pop: {}".format(best_pop)
         # Reshape the element to get the weights
         return (self.population_fitness[best_pop_index,0], self.chromosome_to_weights(best_pop))
 
@@ -98,17 +96,17 @@ class GATrainer():
             winners[i] = winner
         return self.population[[int(x) for x in winners]]
 
-    def global_mutation(self):
-        """ Randomly mutate some elements in the current population """
-        for i in xrange(self.population_size):
-            for j in xrange(len(self.population[i])):
-                if np.random.random() < self.mutation_rate:
-                    # Multiply the current value by a random value from a normal distribution with mean=0 and std=2
-                    self.population[i][j] = self.population[i][j] * np.random.normal(0,2,1)[0]
-
     def element_mutation(self, element):
-        # TODO: Randomly mutate the given element
-        pass
+        """ Randomly mutate the given element """
+        for i in xrange(len(element)):
+            if np.random.random() < self.mutation_rate:
+                # Multiply the current value by a random value from a normal distribution with mean=0 and std=2
+                element[i] = element[i] * np.random.normal(0,2,1)[0]
+
+    def global_mutation(self):
+        """ Randomly mutate all elements in the current population """
+        for i in xrange(self.population_size):
+            self.element_mutation(self.population[i])
 
     def offspring_generation(self, winners):
         """ Apply a crossover process to the winners subset and generate the offspring for the new generation """
@@ -121,6 +119,8 @@ class GATrainer():
             # Mating process. Shuffle the offspring columns.
             # The generated weights are a combination of the winners weights
             np.random.shuffle(offspring[i])
+            # Perform the mutation here, so it only affects to the offspring
+            self.element_mutation(offspring[i])
         new_population = np.zeros((self.population_size, winners.shape[1]))
         new_population[:len(winners)] = winners
         new_population[len(winners):] = offspring
@@ -133,7 +133,7 @@ class GATrainer():
         # Generate the population offspring
         self.population = self.offspring_generation(winners)
         # Mutate some elements
-        #self.mutation()
+        #self.global_mutation()
         # Compute fitness
         self.compute_fitness()
 
