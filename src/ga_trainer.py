@@ -53,7 +53,7 @@ class GATrainer():
             self.population_fitness[i,0] = self.cost_function(w)
 
 
-    def get_best_elemment(self):
+    def get_best_element(self):
         """ Return the best set of weights in the population """
         # Get the best element in the population
         best_pop_index = np.argmin(self.population_fitness[:,0])
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     tr.next_generation()
     print "population: {}".format(tr.population)
     print "population_fitness: {}".format(tr.population_fitness)
-    print "best: {}".format(tr.get_best_elemment())
+    print "best: {}".format(tr.get_best_element())
     tr.next_generation()
     print "population: {}".format(tr.population)
-    print "best: {}".format(tr.get_best_elemment())
+    print "best: {}".format(tr.get_best_element())

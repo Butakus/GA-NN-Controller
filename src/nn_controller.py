@@ -29,6 +29,8 @@ import numpy as np
 from time import time
 from ga_trainer import GATrainer
 from system_model import State, SystemModel
+from matplotlib.pyplot import *
+
 
 # Maximum theta value allowed
 MAX_THETA = 10.0
@@ -43,9 +45,9 @@ def sigmoid(x):
 
 def cost_function(current_state, target_state):
     """ Return the ponderated sum of absolute errors of position, speed and acceleration """
-    error = 5*abs(current_state.position - target_state.position)
-    error += 2*abs(current_state.speed - target_state.speed)
-    error += abs(current_state.accel - target_state.accel)
+    error = 1*abs(current_state.position - target_state.position)
+    error += 1*abs(current_state.speed - target_state.speed)
+    error += 1*abs(current_state.accel - target_state.accel)
     return error
 
 
@@ -65,17 +67,15 @@ class NNController():
         # initialize the trainer object (random initialization)
         self.trainer.init_population()
         # Update (get) the best weights from the trainer (random right now)
-        self.weights = self.trainer.get_best_elemment()
+        self.weights = self.trainer.get_best_element()
 
     def save(self, filename):
         # TODO: Save weights and other params to file
         print "WARNING: Save method not implemented yet"
-        pass
 
     def load(self, filename):
         # TODO: load weights and other params from file
         print "WARNING: load method not implemented yet"
-        pass
 
     def l1_step(self, input_state):
         """ Compute the l1 step for all hidden units """
@@ -90,7 +90,7 @@ class NNController():
 
     def l2_step(self, input_state):
         """ Compute the l2 step """
-        l2_value = sigmoid(np.inner(input_state, self.weights[1]))
+        l2_value = np.inner(input_state, self.weights[1])
         return l2_value
 
     def action(self, current_state, target_state):
@@ -142,17 +142,35 @@ class NNController():
             self.trainer.next_generation()
 
             # Check stop condition
-            current_error, best_weights = self.trainer.get_best_elemment()
+            current_error, best_weights = self.trainer.get_best_element()
             if current_error < error_threshold:
                 break
 
             # Show progress (only each 1000 iterations)
-            if i % 10 == 0:
+            if i % 100 == 0:
                 print "Iter {it}. Current error: {err}".format(it=i, err=current_error)
+                print "Best Weights: {}".format(best_weights)
                 #print "Weights: {}".format(best_weights)
                 print "Time elapsed: {}".format(time()-t)
+                self.compute_error(best_weights)
+                t = [float(j*dt) for j in range(0,len(self.system.states))]
+                positions = []
+                speeds = []
+                accels = []
+                for j in xrange(len(self.system.states)):
+                    positions.append(self.system.states[j].position)
+                    speeds.append(self.system.states[j].speed)
+                    accels.append(self.system.states[j].accel)
+                f, (pos_plot, speed_plot, accel_plot) = subplots(3,sharex=True)
+                pos_plot.plot(t,positions)
+                pos_plot.set_title("Position")
+                speed_plot.plot(t,speeds)
+                speed_plot.set_title("Speed")
+                accel_plot.plot(t,accels)
+                accel_plot.set_title("Acceleration")
+                show()
                 t = time()
-        best_error, best_weights = self.trainer.get_best_elemment()
+        best_error, best_weights = self.trainer.get_best_element()
         print "Training finished."
         print "Error: {}".format(best_error)
         print "Weights: {}".format(best_weights)
