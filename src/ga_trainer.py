@@ -108,8 +108,8 @@ class GATrainer():
         for i in xrange(self.population_size):
             self.element_mutation(self.population[i])
 
-    def offspring_generation(self, winners):
-        """ Apply a crossover process to the winners subset and generate the offspring for the new generation """
+    def permutation_offspring(self, winners):
+        """ Apply a crossover process by shuffling the columns of the winners (no mating between different winners)"""
         offspring_length = self.population_size - len(winners)
         offspring = np.zeros((offspring_length, winners.shape[1]))
         # Populate the offspring array. Just copy and repeat the winners
@@ -121,10 +121,32 @@ class GATrainer():
             np.random.shuffle(offspring[i])
             # Perform the mutation here, so it only affects to the offspring
             self.element_mutation(offspring[i])
+        return offspring
+
+    def mating_offspring(self, winners):
+        """ Apply a crossover process by mixing the columns of different winners (not just shuffling)"""
+        offspring_length = self.population_size - len(winners)
+        chromosome_length = self.input_length * self.hidden_layer_length + self.hidden_layer_length
+        offspring = np.zeros((offspring_length, winners.shape[1]))
+        # Populate the offspring array.
+        for i in xrange(offspring_length):
+            # Select 2 parents from winners subset
+            parents = np.random.choice(range(len(winners)), 2, replace=False)
+            # Mating process. Take half weights from one parent and the other half from the other
+            offspring[i][:chromosome_length / 2] = winners[parents[0]][:chromosome_length / 2]
+            offspring[i][chromosome_length / 2:] = winners[parents[1]][chromosome_length / 2:]
+            # Perform the mutation here, so it only affects to the offspring
+            self.element_mutation(offspring[i])
+        return offspring
+
+    def offspring_generation(self, winners):
+        """ Apply a crossover process to the winners subset and generate the offspring for the new generation """
+        #offspring = self.permutation_offspring(winners)
+        offspring = self.mating_offspring(winners)
         new_population = np.zeros((self.population_size, winners.shape[1]))
         new_population[:len(winners)] = winners
         new_population[len(winners):] = offspring
-        return new_population        
+        return new_population
 
     def next_generation(self):
         """ Compute the next generation and evaluate its fitness """
