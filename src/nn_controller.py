@@ -98,7 +98,7 @@ class NNController():
         # Network input: current_state,  target_state and 1 for the bias weight
         x = np.zeros(7)
         x[:3] = current_state.list()
-        x[3:6] = current_state.list()
+        x[3:6] = target_state.list()
         x[6] = 1
         # Compute the outputs of the hidden level units
         l1_values = self.l1_step(x)
